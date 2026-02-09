@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>🌙 التحدي الرمضاني العائلي</title>
+<style>
+body{direction:rtl;font-family:Tahoma;background:#0f2027;color:white;text-align:center;margin:0;padding:0;}
+.box{background:white;color:black;padding:15px;margin:15px auto;max-width:550px;border-radius:12px}
+input,button{padding:7px;margin:4px}
+button{background:#27ae60;color:white;border:none;border-radius:6px;cursor:pointer}
+.red{background:#c0392b}
+.progress{background:#ddd;border-radius:20px;overflow:hidden;margin:5px 0}
+.bar{height:18px;background:#27ae60}
+.small{font-size:13px;color:#333;margin-bottom:2px}
+.note{color:#555;font-size:13px}
+</style>
+</head>
+
+<body>
+
+<h1>🌙 التحدي الرمضاني العائلي</h1>
+<p id="publicZekr"></p>
+<p>🤍 لا تنسَ الدعاء لوالديك</p>
+
+<!-- تسجيل الدخول -->
+<div class="box">
+  <input id="name" placeholder="الاسم">
+  <input id="pass" type="password" placeholder="كلمة السر">
+  <br>
+  <button id="loginBtn">دخول</button>
+</div>
+
+<!-- لوحة المستخدم -->
+<div id="panel" class="box" style="display:none">
+  <h3 id="welcome"></h3>
+  <p id="userZekr"></p>
+
+  <b>📖 القرآن</b><br>
+  صفحات: <span id="pages">0</span> | أجزاء: <span id="juz">0</span><br>
+  <button onclick="add('pages',1)">+1</button>
+  <button onclick="add('pages',5)">+5</button>
+  <button class="red" onclick="add('pages',-1)">−1</button>
+
+  <hr>
+
+  <b>🤲 الأذكار</b><br>
+  العدد: <span id="azkar">0</span><br>
+  <button onclick="add('azkar',10)">+10</button>
+  <button class="red" onclick="add('azkar',-10)">−10</button>
+
+  <hr>
+
+  <b>💰 الصدقة</b><br>
+  العدد: <span id="sadaqa">0</span><br>
+  <button onclick="add('sadaqa',1)">+1</button>
+  <button class="red" onclick="add('sadaqa',-1)">−1</button>
+
+  <hr>
+
+  <b>🌟 عمل صالح إضافي</b><br>
+  <button onclick="goodDeed()">أجر إضافي</button>
+
+  <hr>
+
+  <b>✨ الحسنات التقريبية</b><br>
+  <span id="hasanat">0</span><br>
+  <span class="note">والله يضاعف لمن يشاء</span>
+
+  <hr>
+
+  <b>📖 الختمة العائلية</b><br>
+  صفحات: <span id="familyQ">0</span> / 604<br>
+  <button id="famPlus">+1</button>
+  <button id="famMinus" class="red">−1</button>
+</div>
+
+<!-- التقدّم العائلي -->
+<div class="box">
+  <h3>🏁 التقدّم العائلي – القرآن</h3>
+  <div id="list"></div>
+  <hr>
+  <h3>📖 الختمة الجماعية</h3>
+  <div id="familyLine"></div>
+</div>
+
+<script>
+const azkarList=[
+"سبحان الله وبحمده",
+"لا إله إلا الله",
+"اللهم صلّ على محمد",
+"أستغفر الله العظيم",
+"سبحان الله العظيم"
+];
+
+const defaultUsers={
+"هيثم":{pass:"1111",pages:0,azkar:0,sadaqa:0,bonus:0},
+"مصطفى":{pass:"2222",pages:0,azkar:0,sadaqa:0,bonus:0},
+"محمد":{pass:"1234",pages:0,azkar:0,sadaqa:0,bonus:0},
+"طلال":{pass:"3333",pages:0,azkar:0,sadaqa:0,bonus:0},
+"جودي":{pass:"4444",pages:0,azkar:0,sadaqa:0,bonus:0},
+"احمد":{pass:"5555",pages:0,azkar:0,sadaqa:0,bonus:0},
+"منال":{pass:"6666",pages:0,azkar:0,sadaqa:0,bonus:0},
+"مياس":{pass:"7777",pages:0,azkar:0,sadaqa:0,bonus:0},
+"عدنان":{pass:"8888",pages:0,azkar:0,sadaqa:0,bonus:0}
+};
+
+// تحميل البيانات أو إعدادها لأول مرة
+let data = JSON.parse(localStorage.getItem("ramadanData") || 
+  JSON.stringify({users:defaultUsers,familyQ:0}));
+
+let current=null;
+
+// عرض ذكر عشوائي
+function randZekr(){ return azkarList[Math.floor(Math.random()*azkarList.length)]; }
+document.getElementById("publicZekr").innerText=randZekr();
+
+function save(){ localStorage.setItem("ramadanData",JSON.stringify(data)); }
+
+// زر الدخول
+document.getElementById("loginBtn").addEventListener("click",()=>{
+  const n=document.getElementById("name").value.trim();
+  const p=document.getElementById("pass").value;
+  if(!data.users[n]||data.users[n].pass!==p){
+    return alert("الاسم أو كلمة السر خطأ");
+  }
+  current=n;
+  panel.style.display="block";
+  document.getElementById("welcome").innerText="أهلًا "+n;
+  document.getElementById("userZekr").innerText=randZekr();
+
+  // محمد فقط يقدر يعدّل الختمة
+  document.getElementById("famPlus").disabled=document.getElementById("famMinus").disabled=n!=="محمد";
+
+  update();
+});
+
+function add(type,val){
+  const u=data.users[current];
+  u[type]=Math.max(0,u[type]+val);
+  update();
+  save();
+}
+
+function goodDeed(){
+  data.users[current].bonus+=50;
+  alert("🌸 تقبّل الله عملك");
+  update();
+  save();
+}
+
+function addFamily(val){
+  if(current!=="محمد") return;
+  data.familyQ=Math.max(0,Math.min(604,data.familyQ+val));
+  update();
+  save();
+}
+
+function update(){
+  const u=data.users[current];
+  document.getElementById("pages").innerText=u.pages;
+  document.getElementById("juz").innerText=Math.floor(u.pages/20);
+  document.getElementById("azkar").innerText=u.azkar;
+  document.getElementById("sadaqa").innerText=u.sadaqa;
+  document.getElementById("hasanat").innerText=u.pages*100+u.azkar+u.sadaqa*10+u.bonus;
+
+  document.getElementById("familyQ").innerText=data.familyQ;
+
+  drawList();
+  drawFamily();
+}
+
+function drawList(){
+  let h="";
+  for(let n in data.users){
+    const p=data.users[n].pages;
+    const percent=Math.min(p/604*100,100);
+    h+=`<div class="small">${n}</div>
+    <div class="progress"><div class="bar" style="width:${percent}%"></div></div>`;
+  }
+  document.getElementById("list").innerHTML=h;
+}
+
+function drawFamily(){
+  document.getElementById("familyLine").innerText=`الختمة الجماعية: ${data.familyQ} / 604`;
+}
+
+// عرض عند أول تحميل
+drawList();
+drawFamily();
+
+</script>
+
+</body>
+</html>
